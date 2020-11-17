@@ -20,7 +20,7 @@ class Stack
 
         bool isEmpty()
         {
-            if(headPtr == NULL)
+            if(headPtr == NULL) // Stack is empty
                 return true;
             return false;
         }
@@ -41,14 +41,14 @@ class Stack
             
             if(!isEmpty())
             {
-                Node *tailPtr = headPtr->prevPtr;
+                Node *tailPtr = headPtr->prevPtr; // Last node
                 headPtr->prevPtr = newNode;
                 newNode->nextPtr = headPtr;
                 newNode->prevPtr = headPtr->prevPtr;
                 headPtr = newNode;
-                headPtr->prevPtr = tailPtr;
+                headPtr->prevPtr = tailPtr; // Circular linking
             }
-            else
+            else // Empty Stack
             {
                 newNode->nextPtr = newNode->prevPtr = NULL;
                 headPtr = newNode;
@@ -58,7 +58,7 @@ class Stack
 
         void pop()
         {
-            if(!isEmpty())
+            if(!isEmpty()) // Not empty
             {
                 Node *temp = headPtr;
                 if(temp->nextPtr != NULL)
@@ -67,7 +67,7 @@ class Stack
                     headPtr = headPtr->nextPtr;
                     headPtr->prevPtr = tailPtr;
                 }
-                else
+                else // Empty Stack
                 {
                     headPtr = NULL;
                 }
@@ -75,28 +75,11 @@ class Stack
                 delete temp;
             }
         }
-
-        void display()
-        {
-            Node *temp = headPtr;
-
-            if(!isEmpty())
-            {
-                while(temp != NULL)
-                {
-                    // cout << "Current: " << temp->data << "\tprev: " << temp->prevPtr->data << endl;
-                    cout << temp->data << '\t';
-                    temp = temp->nextPtr;
-                }
-                cout << endl;
-            }
-        }
-
 };
 Stack<char>con;
 
 
-
+string postfix;
 bool precedence(char op,char check)
 {
     if (check == '+' )
@@ -147,17 +130,13 @@ bool precedence(char op,char check)
     {
         return false;
     }
+    else
+    {
+        return false;
+    }
+    
  
 }
-
-
-
-
-
-
-
-string postfix;
-
 void convert(string infix)
 {
    
@@ -213,7 +192,7 @@ void convert(string infix)
         }
         else if (infix[i] == ')')
         {
-            
+            if(infix[i+1]!='\0')
             postfix = postfix + "]";
             while (!con.isEmpty())
             {
@@ -239,6 +218,8 @@ void convert(string infix)
             }
             
             postfix = postfix + infix[i];
+            if(infix[i+2]=='\0')
+            postfix = postfix + "]";
           
 
         }
@@ -246,25 +227,47 @@ void convert(string infix)
     }
 
 }
-
 void evalute();
-// [12][3][8]*[3][4]/[2]-*+]
-// [6][2][3]+-[3][8][2]/+*2^3+]
-
-
-int main()
+void add(Stack<float> &solution, float num1, float num2);
+void subtract(Stack<float> &solution, float num1, float num2);
+void multiply(Stack<float> &solution, float num1, float num2);
+void divide(Stack<float> &solution, float num1, float num2);
+void power(Stack<float> &solution, float num1, float num2);
+void theProgram()
 {
     string infix;
     
     cout << "\nEnter String: ";
     cin >> infix;
+    
     infix = infix + ')';
     convert(infix);
-    // 8+7^3*(4*2)-6
-    // postfix = "[8][7][3]^[4][2]**+[6]-]";
-    cout<<"\nThe converted equation is:  " << postfix << endl;
+    infix.pop_back(); // Removing extra bracket at the end
+    system("clear");
 
+    cout << "\nInfix: " << infix << endl;
+    cout << "Postfix: " << postfix << endl;
     evalute();
+
+    postfix = "";
+}
+
+
+int main()
+{
+    bool isComplete = false;
+    char choice;
+    while(!isComplete)
+    {
+        theProgram();
+        cout << "\n Press y/Y to run the program again. Press any other character to exit the program: ", cin >> choice, cout << endl;
+
+        if(choice != 'Y' && choice != 'y')
+        {
+            cout << "Bye, bye :)" << endl;
+            isComplete = true;
+        }
+    }
 
 
    return 0;
@@ -278,28 +281,20 @@ void evalute()
     float num1, num2, newNum;
     for(int i = 0; postfix[i] != '\0'; i++)
     {
-        if(postfix[i] == '[' )
+        if(postfix[i] == '[' ) // Starting of integer
         {
             bracketComplete = false;
             i++;
             while(!bracketComplete)
             {
-                temp_str = temp_str + postfix[i++];
-                if(postfix[i] == ']')
+                temp_str = temp_str + postfix[i++]; // Making integer
+                if(postfix[i] == ']') // Integer complete
                     bracketComplete = true;
             }
             solution.push(stoi(temp_str));
             temp_str = "";
         }
-       /* else if(postfix[i] == ']')
-        {
-            newNum = solution.top();
-            solution.pop();
-
-            cout << "Solution: " << newNum;
-            break;
-        }*/
-        else
+        else // Operator
         {
             num1 = solution.top();
             solution.pop();
@@ -310,28 +305,23 @@ void evalute()
             switch (postfix[i])
             {
             case '+':
-                newNum = num2 + num1;
-                solution.push(newNum);
+                add(solution, num1, num2);
                 break;
 
             case '-':
-                newNum = num2 - num1;
-                solution.push(newNum);
+                subtract(solution, num1, num2);                
                 break;
             
             case '*':
-                newNum = num2 * num1;
-                solution.push(newNum);
+                multiply(solution, num1, num2);
                 break;
 
             case '/':
-                newNum = num2 / num1;
-                solution.push(newNum);
+                divide(solution, num1, num2);
                 break;
 
             case '^':
-                newNum = pow(num2, num1);
-                solution.push(newNum);
+                power(solution, num1, num2);
                 break;            
             
             default:
@@ -339,9 +329,29 @@ void evalute()
             }
         }
     }
-    cout << "Solution: " << newNum;
-
-    
+    newNum = solution.top();
+    solution.pop();
+    cout << "Solution: " << newNum << endl;
 }
 
+void add(Stack<float> &solution, float num1, float num2)
+{
+    solution.push(num2 + num1);
+}
+void subtract(Stack<float> &solution, float num1, float num2)
+{
+    solution.push(num2 - num1);
+}
+void multiply(Stack<float> &solution, float num1, float num2)
+{
+    solution.push(num2 * num1);
+}
+void divide(Stack<float> &solution, float num1, float num2)
+{
+    solution.push(num2 / num1);
+}
+void power(Stack<float> &solution, float num1, float num2)
+{
+    solution.push(pow(num2, num1));
+}
 
